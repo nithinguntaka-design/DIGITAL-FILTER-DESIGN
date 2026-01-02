@@ -1,0 +1,67 @@
+fir_filter_v
+module fir_filter (
+    input clk,
+    input reset,
+    input signed [7:0] x_in,     // Input signal
+    output reg signed [15:0] y_out // Filtered output
+);
+
+    // Shift registers for input samples
+    reg signed [7:0] x1, x2, x3;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            x1 <= 0;
+            x2 <= 0;
+            x3 <= 0;
+            y_out <= 0;
+        end else begin
+            // Shift samples
+            x3 <= x2;
+            x2 <= x1;
+            x1 <= x_in;
+
+            // FIR calculation
+            y_out <= x_in + (x1 << 1) + (x2 << 1) + x3;
+        end
+    end
+
+endmodule
+
+fir_filter_tb
+
+module fir_filter_tb;
+
+reg clk;
+reg reset;
+reg signed [7:0] x_in;
+wire signed [15:0] y_out;
+
+fir_filter uut (
+    .clk(clk),
+    .reset(reset),
+    .x_in(x_in),
+    .y_out(y_out)
+);
+
+// Clock generation
+always #5 clk = ~clk;
+
+initial begin
+    clk = 0;
+    reset = 1;
+    x_in = 0;
+
+    #10 reset = 0;
+
+    // Apply input samples
+    #10 x_in = 8'd10;
+    #10 x_in = 8'd20;
+    #10 x_in = 8'd30;
+    #10 x_in = 8'd40;
+    #10 x_in = 8'd50;
+
+    #50 $finish;
+end
+
+endmodule
